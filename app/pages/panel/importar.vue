@@ -9,18 +9,12 @@ const EXAMPLE = `titulo;autor;ubicacion;categorias;ejemplares
 Camino;San Josemaría Escrivá;Oratorio · Estantería 1;Oración|Clásicos;2
 Historia de un alma;Santa Teresa de Lisieux;Oratorio · Estantería 1;Santos;1`
 
-const PROMPT = `A partir de estas fotos de una estantería, devuélveme SOLO un CSV separado por punto y coma, con esta cabecera exacta:
-titulo;autor;ubicacion;categorias;ejemplares
-Una fila por libro distinto. Si hay varios ejemplares iguales, súmalos en "ejemplares".
-En "ubicacion" pon exactamente: Oratorio · Estantería 1
-Deja "autor" vacío si no se lee. "categorias" es opcional; si pones varias, sepáralas con |.`
 
 const text = ref('')
 const preview = ref<Preview | null>(null)
 const busy = ref(false)
 const error = ref('')
 const result = ref<{ created: number; skipped: number } | null>(null)
-const copied = ref(false)
 
 const toImport = computed(() => preview.value?.rows.filter(r => !r.duplicate).length ?? 0)
 
@@ -61,37 +55,24 @@ async function apply() {
   }
 }
 
-async function copyPrompt() {
-  try {
-    await navigator.clipboard.writeText(PROMPT)
-    copied.value = true
-    setTimeout(() => { copied.value = false }, 2500)
-  }
-  catch {}
-}
 </script>
 
 <template>
   <div class="max-w-4xl">
     <h1 class="text-2xl font-extrabold tracking-[-0.02em]">Importar una lista</h1>
     <p class="mt-1 max-w-[65ch] text-muted">
-      Pega aquí la lista que te devuelva ChatGPT (o sube un fichero .csv). Antes de guardar nada verás qué libros se añaden,
+      Pega aquí la lista de libros (o sube un fichero .csv). Antes de guardar nada verás qué libros se añaden,
       cuáles ya estaban y qué ubicaciones o categorías nuevas se crean.
     </p>
 
     <details class="mt-5 rounded-xl bg-panel p-5">
-      <summary class="cursor-pointer font-bold">Formato y qué pedirle a ChatGPT</summary>
+      <summary class="cursor-pointer font-bold">Formato de la lista</summary>
       <p class="mt-3 text-sm text-muted">
         Columnas: <strong class="text-ink">titulo</strong> y <strong class="text-ink">ubicacion</strong> son obligatorias;
         <strong class="text-ink">autor</strong>, <strong class="text-ink">categorias</strong> (separadas por |) y
         <strong class="text-ink">ejemplares</strong> (1 si se deja vacío) son opcionales. Vale separar con punto y coma, coma o tabulador.
       </p>
       <pre class="mt-3 overflow-x-auto rounded-lg bg-ground p-3 text-sm">{{ EXAMPLE }}</pre>
-      <p class="mt-4 text-sm font-semibold text-muted">Instrucción para ChatGPT (cambia la ubicación por la de cada foto):</p>
-      <pre class="mt-2 overflow-x-auto rounded-lg bg-ground p-3 text-sm whitespace-pre-wrap">{{ PROMPT }}</pre>
-      <button type="button" class="mt-2 -ml-3 min-h-11 rounded-full px-3 text-sm font-bold text-accent-ink hover:bg-ground" @click="copyPrompt">
-        {{ copied ? 'Copiada' : 'Copiar instrucción' }}
-      </button>
     </details>
 
     <label class="mt-6 flex flex-col gap-1">
