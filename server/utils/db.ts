@@ -1,3 +1,4 @@
+import { mkdirSync } from 'node:fs'
 import { PGlite } from '@electric-sql/pglite'
 import { applySchema, createNeonDb, createPgliteDb, type Db } from '../db/client'
 
@@ -12,6 +13,7 @@ export async function useDb(): Promise<Db> {
     }
     else {
       if (process.env.NODE_ENV === 'production') throw new Error('NUXT_DATABASE_URL is required in production')
+      mkdirSync('./.data', { recursive: true })
       db = createPgliteDb(new PGlite('./.data/dev-db'))
       ready = applySchema(db)
     }
