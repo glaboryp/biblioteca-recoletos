@@ -18,11 +18,6 @@ const error = ref('')
 const notice = ref('')
 const nameInput = ref<HTMLInputElement>()
 
-function errorMessage(e: unknown) {
-  const err = e as { data?: { statusMessage?: string; message?: string }; statusMessage?: string }
-  return err.data?.statusMessage || err.data?.message || err.statusMessage || 'No se ha podido guardar. Inténtalo de nuevo.'
-}
-
 async function startBorrow() {
   error.value = ''
   notice.value = ''
@@ -52,7 +47,7 @@ async function submitBorrow() {
     notice.value = `Apuntado. Cuando acabes, déjalo en ${props.book.location.name}.`
   }
   catch (e) {
-    error.value = errorMessage(e)
+    error.value = apiError(e)
   }
   finally {
     busy.value = false
@@ -69,7 +64,7 @@ async function confirmReturn(loanId: number) {
     notice.value = `Devuelto. Gracias por dejarlo en ${props.book.location.name}.`
   }
   catch (e) {
-    error.value = errorMessage(e)
+    error.value = apiError(e)
   }
   finally {
     busy.value = false
