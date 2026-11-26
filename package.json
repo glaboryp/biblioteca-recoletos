@@ -1,0 +1,30 @@
+{
+  "name": "biblioteca-recoletos",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare",
+    "test": "vitest run",
+    "db:migrate": "tsx scripts/migrate.ts"
+  },
+  "dependencies": {
+    "@electric-sql/pglite": "^0.6.0",
+    "@neondatabase/serverless": "^1.2.1",
+    "nuxt": "^4.7.0",
+    "nuxt-auth-utils": "^0.6.2",
+    "papaparse": "^5.7.1",
+    "vue": "^3.5.45",
+    "vue-router": "^5.4.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.5",
+    "@types/papaparse": "^5.5.2",
+    "tailwindcss": "^4.3.5",
+    "tsx": "^4.23.15",
+    "vitest": "^5.1.2"
+  }
+}
