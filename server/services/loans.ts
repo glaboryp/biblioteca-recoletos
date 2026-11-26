@@ -6,11 +6,11 @@ export async function borrow(db: Db, bookId: number, borrowerName: string): Prom
   return db.tx(async (t) => {
     const [book] = await t.query<{ copies: number }>('SELECT copies FROM books WHERE id = $1 FOR UPDATE', [bookId])
     if (!book) fail(404, 'El libro no existe')
-    const [{ n }] = await t.query<{ n: number }>(
-      'SELECT count(*)::int AS n FROM loans WHERE book_id = $1 AND returned_at IS NULL', [bookId])
+    const { n } = (await t.query<{ n: number }>(
+      'SELECT count(*)::int AS n FROM loans WHERE book_id = $1 AND returned_at IS NULL', [bookId]))[0]!
     if (n >= book.copies) fail(409, 'No quedan ejemplares libres')
-    const [{ id }] = await t.query<{ id: number }>(
-      'INSERT INTO loans (book_id, borrower_name) VALUES ($1, $2) RETURNING id', [bookId, name])
+    const { id } = (await t.query<{ id: number }>(
+      'INSERT INTO loans (book_id, borrower_name) VALUES ($1, $2) RETURNING id', [bookId, name]))[0]!
     return id
   })
 }

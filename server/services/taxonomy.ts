@@ -27,7 +27,7 @@ export async function createTerm(db: Db, kind: Kind, name: string): Promise<numb
   check(kind)
   const clean = requiredText(name, 60, 'El nombre')
   return write(kind, async () =>
-    (await db.query<{ id: number }>(`INSERT INTO ${kind} (name) VALUES ($1) RETURNING id`, [clean]))[0].id)
+    (await db.query<{ id: number }>(`INSERT INTO ${kind} (name) VALUES ($1) RETURNING id`, [clean]))[0]!.id)
 }
 
 export async function renameTerm(db: Db, kind: Kind, id: number, name: string): Promise<void> {

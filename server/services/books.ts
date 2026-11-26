@@ -25,14 +25,14 @@ async function setCategories(db: Db, bookId: number, categoryIds: number[]) {
 }
 
 const openLoanCount = async (db: Db, bookId: number) =>
-  (await db.query<{ n: number }>('SELECT count(*)::int AS n FROM loans WHERE book_id = $1 AND returned_at IS NULL', [bookId]))[0].n
+  (await db.query<{ n: number }>('SELECT count(*)::int AS n FROM loans WHERE book_id = $1 AND returned_at IS NULL', [bookId]))[0]!.n
 
 export function createBook(db: Db, input: BookInput): Promise<number> {
   return db.tx(async (t) => {
     const b = await clean(t, input)
-    const [{ id }] = await t.query<{ id: number }>(
+    const { id } = (await t.query<{ id: number }>(
       'INSERT INTO books (title, author, location_id, copies) VALUES ($1, $2, $3, $4) RETURNING id',
-      [b.title, b.author, b.locationId, b.copies])
+      [b.title, b.author, b.locationId, b.copies]))[0]!
     await setCategories(t, id, b.categoryIds)
     return id
   })
