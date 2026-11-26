@@ -11,6 +11,7 @@ export default defineNuxtConfig({
       htmlAttrs: { lang: 'es' },
       title: 'Biblioteca Recoletos',
       meta: [{ name: 'robots', content: 'noindex, nofollow' }],
+      link: [{ rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' }],
     },
   },
   runtimeConfig: {
