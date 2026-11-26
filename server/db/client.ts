@@ -28,8 +28,9 @@ function wrapClient(client: PoolClient): Db {
   return db
 }
 
-export function createNeonDb(connectionString: string): Db {
-  const pool = new Pool({ connectionString })
+export function createNeonDb(connectionString: string, pool: Pool = new Pool({ connectionString })): Db {
+  // Idle connections dropped by Neon while the function is frozen must not crash the process.
+  pool.on('error', (e: Error) => console.error('Postgres pool error', e))
   return {
     query: async (text, params) => (await pool.query(text, params)).rows,
     exec: async (sql) => { await pool.query(sql) },
@@ -39,14 +40,18 @@ export function createNeonDb(connectionString: string): Db {
         await client.query('BEGIN')
         const result = await fn(wrapClient(client))
         await client.query('COMMIT')
+        client.release()
         return result
       }
       catch (e) {
-        await client.query('ROLLBACK')
+        try {
+          await client.query('ROLLBACK')
+          client.release()
+        }
+        catch (rollbackError) {
+          client.release(rollbackError as Error)
+        }
         throw e
-      }
-      finally {
-        client.release()
       }
     },
   }

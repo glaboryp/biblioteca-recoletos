@@ -98,3 +98,20 @@ test('duplicado dentro del mismo lote: la segunda fila se omite', async () => {
   expect(p.rows.map(r => r.duplicate)).toEqual([false, true])
   expect(await applyImport(db, 'titulo,ubicacion\nCamino,Oratorio\ncamino,ORATORIO\n')).toEqual({ created: 1, skipped: 1 })
 })
+
+test('previewImport no crea ubicación nueva por espacios dobles', async () => {
+  await createTerm(db, 'locations', 'Oratorio · Estantería 1')
+  const p = await previewImport(db, 'titulo;ubicacion\nCamino;Oratorio  · Estantería 1\n')
+  expect(p.newLocations).toEqual([])
+})
+
+test('CSV pegado con el bloque de código de ChatGPT', () => {
+  const { rows, errors } = parseImport('```csv\ntitulo;ubicacion\nCamino;Oratorio\n```\n')
+  expect(errors).toEqual([])
+  expect(rows).toEqual([expect.objectContaining({ line: 3, title: 'Camino', location: 'Oratorio' })])
+})
+
+test('líneas en blanco al principio no descuadran los números de línea', () => {
+  const { errors } = parseImport('\n\ntitulo,ubicacion\n,Oratorio\n')
+  expect(errors).toEqual([{ line: 4, message: 'Falta el título' }])
+})

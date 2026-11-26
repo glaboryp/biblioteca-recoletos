@@ -71,3 +71,9 @@ test('nombre vacío o > 60 → 400', async () => {
 test('kind no válido → 404', async () => {
   await expect(createTerm(db, 'books; DROP TABLE books' as any, 'x')).rejects.toMatchObject({ statusCode: 404 })
 })
+
+test('espacios internos repetidos y tildes descompuestas cuentan como el mismo nombre', async () => {
+  const id = await createTerm(db, 'locations', 'Oratorio · Estantería 1')
+  await expect(createTerm(db, 'locations', 'Oratorio  ·  Estantería 1')).rejects.toMatchObject({ statusCode: 409 })
+  expect(await findOrCreateTerm(db, 'locations', 'Oratorio · Estanteri\u0301a 1')).toBe(id)
+})

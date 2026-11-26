@@ -4,8 +4,10 @@ export function fail(statusCode: number, message: string): never {
   throw createError({ statusCode, statusMessage: message, message })
 }
 
+export const cleanSpaces = (s: string) => s.normalize('NFC').replace(/\s+/g, ' ').trim()
+
 export function requiredText(value: unknown, max: number, label: string): string {
-  const text = typeof value === 'string' ? value.trim() : ''
+  const text = typeof value === 'string' ? cleanSpaces(value) : ''
   if (!text) fail(400, `${label} es obligatorio`)
   if (text.length > max) fail(400, `${label} no puede superar ${max} caracteres`)
   return text

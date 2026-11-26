@@ -1,7 +1,7 @@
 import Papa from 'papaparse'
 import type { Db } from '../db/client'
 import { createBook } from './books'
-import { fail } from './errors'
+import { cleanSpaces, fail } from './errors'
 import { findOrCreateTerm } from './taxonomy'
 
 export type ImportRow = { line: number; title: string; author: string | null; location: string; categories: string[]; copies: number }
@@ -10,23 +10,28 @@ export type ImportPreview = { rows: (ImportRow & { duplicate: boolean })[]; erro
 
 const COLUMNS = ['titulo', 'autor', 'ubicacion', 'categorias', 'ejemplares'] as const
 const headerKey = (h: string) => h.normalize('NFD').replace(/\p{Diacritic}/gu, '').trim().toLowerCase()
-const key = (s: string | null) => (s ?? '').trim().toLowerCase()
+const key = (s: string | null) => cleanSpaces(s ?? '').toLowerCase()
 
 export function parseImport(text: string): { rows: ImportRow[]; errors: ImportError[] } {
-  const { data } = Papa.parse<string[]>(text.replace(/^﻿/, '').trim(), { skipEmptyLines: false })
-  const [header, ...lines] = data
-  const headers = (header ?? []).map(headerKey)
+  // Code-fence lines (ChatGPT wraps CSV in ```csv) become blank so line numbers stay true.
+  const source = text.replace(/^\uFEFF/, '').split(/\r?\n/).map(l => (/^\s*```/.test(l) ? '' : l)).join('\n')
+  const headerLine = source.split('\n').find(l => l.trim()) ?? ''
+  const delimiter = [';', '\t', ','].reduce((best, d) => (headerLine.split(d).length > headerLine.split(best).length ? d : best), ',')
+  const { data } = Papa.parse<string[]>(source, { delimiter, skipEmptyLines: false })
+  const isBlank = (cells: string[]) => cells.every(c => !c.trim())
+  const headerIndex = data.findIndex(cells => !isBlank(cells))
+  const headers = (data[headerIndex] ?? []).map(headerKey)
   const missing = (['titulo', 'ubicacion'] as const).filter(c => !headers.includes(c))
-  if (!text.trim() || missing.length) {
-    return { rows: [], errors: [{ line: 1, message: `Falta la columna ${missing.join(' y ') || 'titulo'} en la cabecera` }] }
+  if (headerIndex < 0 || missing.length) {
+    return { rows: [], errors: [{ line: headerIndex + 1 || 1, message: `Falta la columna ${missing.join(' y ') || 'titulo'} en la cabecera` }] }
   }
 
   const rows: ImportRow[] = []
   const errors: ImportError[] = []
-  lines.forEach((cells, i) => {
-    const line = i + 2
-    if (cells.every(c => !c.trim())) return
-    const get = (col: typeof COLUMNS[number]) => (cells[headers.indexOf(col)] ?? '').trim()
+  data.forEach((cells, i) => {
+    const line = i + 1
+    if (i <= headerIndex || isBlank(cells)) return
+    const get = (col: typeof COLUMNS[number]) => cleanSpaces(cells[headers.indexOf(col)] ?? '')
     const title = get('titulo')
     const location = get('ubicacion')
     const rawCopies = get('ejemplares')
@@ -38,7 +43,7 @@ export function parseImport(text: string): { rows: ImportRow[]; errors: ImportEr
       : get('autor').length > 120 ? 'El autor supera 120 caracteres'
       : !Number.isInteger(copies) || copies < 1 ? 'Los ejemplares deben ser un número entero mayor que 0'
       : null
-    const categories = get('categorias').split('|').map(c => c.trim()).filter(Boolean)
+    const categories = get('categorias').split('|').map(cleanSpaces).filter(Boolean)
     if (!problem && categories.some(c => c.length > 60)) errors.push({ line, message: 'Alguna categoría supera 60 caracteres' })
     else if (problem) errors.push({ line, message: problem })
     else rows.push({ line, title, author: get('autor') || null, location, categories, copies })

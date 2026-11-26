@@ -17,24 +17,24 @@ pnpm dev
 pnpm test
 ```
 
-Si no hay `NUXT_DATABASE_URL`, la app usa una base de datos local en `.data/dev-db` (PGlite), así que no hace falta Neon para desarrollar. En local se puede entrar al panel sin Google abriendo `/auth/dev`: entra como `NUXT_ADMIN_EMAIL`. Esa ruta no existe en producción.
+Si no hay `DATABASE_URL`, la app usa una base de datos local en `.data/dev-db` (PGlite), así que no hace falta Neon para desarrollar. En local se puede entrar al panel sin Google abriendo `/auth/dev`: entra como `NUXT_ADMIN_EMAIL`. Esa ruta no existe en producción.
 
 ## Puesta en marcha
 
 Crea todas las cuentas con **recoletosuniversitario@gmail.com**, para que la web no dependa de la cuenta personal de nadie.
 
 1. **Vercel**: crea un proyecto importando este repositorio. Vercel detecta Nuxt y pnpm solo.
-2. **Neon**: en el proyecto de Vercel, *Storage → Marketplace → Neon* y conéctalo. Copia la cadena de conexión (`DATABASE_URL`) en una variable nueva llamada `NUXT_DATABASE_URL`.
+2. **Neon**: en el proyecto de Vercel, *Storage → Marketplace → Neon* y conéctalo. La integración crea sola la variable `DATABASE_URL`, que es la que usa la app. Elige para Neon **la misma región que las funciones de Vercel** (por ejemplo, las dos en Frankfurt). Si están lejos, importar listas largas se vuelve lento.
 3. **Crear las tablas**, una vez, desde tu ordenador:
    ```bash
-   NUXT_DATABASE_URL='postgres://…' pnpm db:migrate
+   DATABASE_URL='postgres://…' pnpm db:migrate
    ```
 4. **Google Cloud** ([console.cloud.google.com](https://console.cloud.google.com)):
    1. Crea un proyecto, por ejemplo "Biblioteca Recoletos".
    2. *Google Auth Platform → Branding*: nombre de la app y email de soporte.
    3. *Audience*: tipo **External** y pulsa **Publish app**, para dejarla en producción. Si se queda en modo *Testing*, solo podrán entrar las cuentas que añadas a mano en Google Cloud. Con los permisos `email` y `profile` no hace falta verificación.
    4. *Clients → Create client → Web application*. En *Authorized redirect URIs* añade `https://<tu-dominio>/auth/google`, y también `http://localhost:3000/auth/google` si quieres probar el login real en local.
-5. **Variables de entorno en Vercel** (*Settings → Environment Variables*):
+5. **Variables de entorno en Vercel** (*Settings → Environment Variables*). `DATABASE_URL` ya la ha puesto Neon:
 
    | Variable | Valor |
    |---|---|
@@ -42,7 +42,6 @@ Crea todas las cuentas con **recoletosuniversitario@gmail.com**, para que la web
    | `NUXT_APP_SECRET` | 32+ caracteres aleatorios (`openssl rand -base64 32`) |
    | `NUXT_OAUTH_GOOGLE_CLIENT_ID` | el *Client ID* de Google |
    | `NUXT_OAUTH_GOOGLE_CLIENT_SECRET` | el *Client secret* de Google |
-   | `NUXT_DATABASE_URL` | la cadena de conexión de Neon |
 
 6. **Redespliega** y prueba a entrar en `/panel` con la cuenta de Recoletos. Desde *Encargadas* puedes añadir al resto.
 
