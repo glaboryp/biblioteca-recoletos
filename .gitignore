@@ -22,3 +22,7 @@ logs
 .env
 .env.*
 !.env.example
+
+# Design tooling output
+.taste-skill/
+.impeccable/review/
